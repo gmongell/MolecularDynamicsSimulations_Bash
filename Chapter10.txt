@@ -1,0 +1,70 @@
+>module load gnuplot
+>cd /path to files
+>gnuplot
+>set datafile commentschars "#@&"
+>plot "[].XVG" u 1:2 w lines
+>set terminal gif
+>set output "rdf_output.gif"
+
+>!/usr/bin/ksh
+>egrep -v '^#' inp_file | while read mLine do      echo "mLine = <${mLine}>" done
+
+#!/bin/sh
+module load gnuplot/4.6.4
+>for i in EtOHMix80 …[]
+>do
+>for j in PE4 …[]
+>do
+>for FILE in r_concat.dat
+>do
+>cd /fs/lustre/cwr0408/$i/$j/
+>gnuplot <<EOF
+>    set datafile commentschars "#!"
+>    set xlabel "time (ps)"
+>    set ylabel "surface parameter (f)"
+>    set term png
+>    set output "r_concat1.png"
+>    plot "r_concat.dat" using (column(0)):1 title "${i} ${j} ${FILE} f1"
+>EOF
+
+>gnuplot <<EOF
+>    set datafile commentschars "#!"
+>    set xlabel "time (ps)"
+>    set ylabel "surface parameter (f)"
+>    set term png
+>    set output "r_concat2.png"
+>    plot "r_concat.dat" using (column(0)):2 title "${i} ${j} ${FILE} f2"
+>EOF
+
+>gnuplot <<EOF
+>    set datafile commentschars "#!"
+>    set xlabel "time (ps)"
+>    set ylabel "surface parameter (f)"
+>    set term png
+>    set output "r_concat3.png"
+>    plot "r_concat.dat" using (column(0)):3 title "${i} ${j} ${FILE} f3"
+>EOF
+
+>gnuplot <<EOF
+>    set datafile commentschars "#!"
+>    set xlabel "time (ps)"
+>    set ylabel "surface parameter (f)"
+>    set term png
+>    set output "r_concat4.png"
+>    plot "r_concat.dat" using (column(0)):4 title "${i} ${j} ${FILE} f4"
+>EOF
+
+>gnuplot <<EOF
+>    set datafile commentschars "#!"
+>    set xlabel "time (ps)"
+>    set ylabel "surface parameter (f)"
+>    set term png
+>    set output "r_concat5.png"
+>    plot "r_concat.dat" using (column(0)):5 title "${i} ${j} ${FILE} f5"
+>EOF
+
+>done
+>done
+>done
+
+

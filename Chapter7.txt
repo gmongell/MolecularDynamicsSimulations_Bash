@@ -1,0 +1,8 @@
+#include "ffoplsaa.itp"
+#include "ffbonded2.itp"
+#include "spce.itp"
+#include "acetoin.top"
+
+[ bondtypes ]
+>  CT     C      CT     OH       3     4.87855   0.00000  -4.87855   0.00000   0.00000   0.00000 ; for acetoin
+

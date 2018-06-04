@@ -1,0 +1,133 @@
+>vmd
+>su
+>sudo yum update
+>sudo yum install libcudart.so.4 libexpat.so.0 libsqlite3.so.0
+>sudo yum install libcudart.so.4 libexpat.so.0 libsqlite3.so.0 libGL.so.1
+>sudo yum install libGLU.so.1 csh libXinerama.so.1 libXi.so.6 libXft.so.2
+>sudo su
+>sh ./vmdInstall.sh
+#Required for VMD install on Fedora. VMD requires old graphical
+#user interface information not standard in present linux version
+#csh is required for the installation procedure.
+>sudo yum install compat-libstdc++-33 csh
+>cd Documents
+>tar -zxvf
+>cd vmd-1.9.1
+>./configure LINUX
+>cd src
+>make install
+
+>wget ftp://plasma-gate/weizmann.ac.il/pub/grace/src/grace-latest.tar.gz
+>tar -xzf ./grace-latest.tar.gz
+>cd ./grace-5.1.23
+>./configure --enable-grace-home=/opt/grace --with-extra-incpath=/usr/local/include:/opt/include --with-extra-ldpath=/usr/local/lib:/opt/lib --prefix=/usr
+>xmgrace
+
+sudo yum install grace
+
+>module load cmake/2.8.10.2
+>tar xfz GROMACS-4.6.5.tar.gz
+>cd GROMACS-4.6.5
+>mkdir build
+>cd build
+>module load cmake/2.8.10.2
+>module load cuda
+>module load fftw3/3.3
+>cmake ..
+>cmake .. -DGMX_BUILD_OWN=ON
+>make gmxfftw
+>make
+
+>cmake .. -DGMX_GPU=ON -DGMX_MPI=ON -DCMAKE_INSTALL_PREFIX=/home/marydoe/programs --program-suffix=-4.6.5-MPI_GPU
+
+#!/bin/bash
+#The purpose of this script is to install GROMACS and its supporting packages. 
+#It downloads the required packages directly from the in-ternet when required.
+#obtaining root privileges
+>sudo su
+#Check if the GROMACS engine is functioning [expected fails].
+>luck
+grompp
+#This is where the engine commands will be stored.
+>cd $Home/Documents
+#To display a list of available updates type
+>yum list updates
+#To update packages
+>yum update
+#Installing other packages that GROMACS users will likely find themselves utilizing.
+>sudo yum install avogadro-1.0.3-16.fc19 avogadro-libs-1.0.3-16.fc19
+sudo yum install fftw2-2.1.5-25.fc19 fftw-doc-3.3.3-5.fc19
+#Installing the GROMACS packages available in the soft-ware center
+>sudo yum install GROMACS-4.6.3-1.fc19 GROMACS-bash-4.6.3-1.fc19 GROMACS-common-4.6.3-1.fc19 GROMACS-csh-4.6.3-1.fc19 GROMACS-devel-4.6.c-1.fc19 GROMACS-libs-4.6.3-1.fc19 GROMACS-mpich2-4.6.3-1.fc19 GROMACS-mpich2-devel-4.6.3-1.fc19 GROMACS-mpich2-libs-4.6.3-1.fc19 GROMACS-ngmx-4.6.3-1.fc19 GROMACS-openmpi-4.6.3-1.fc19 GROMACS-openmpi-devel-4.6.3-1.fc19 GROMACS-openmpi-libs-4.6.3-1.fc19 GROMACS-zdh-4.6.3-1.fc19 xdrfile-1.1.1-4.fc19
+#Installing cmake (a program the installs other programs - including GROMACS)
+>sudo yum install catkin-0.4.5-7.gitd4f1f24.fc19 cmake-2.8.11-1.fc19 cmake-fedora-1.0.5-2.fc19 cmake-gui-2.8.11-1.fc19
+#Installing wget (a file downloading program to obtain the GROMACS tarball)
+>sudo yum install wget-1.14-8.fc19 gwget
+#Testing g_energy [expected pass]
+>g_energy
+#Testing grompp and mdrun [expected fail]
+>grompp
+>mdrun
+#Download the GROMACS package from the site
+#There are many newer and older versions available. So pick a GROMACS
+#version and source, then place them here.
+>wget ftp://ftp.GROMACS.org/pub/GROMACS/GROMACS-4.6.3.tar.gz
+>tar xvzf GROMACS-4.6.3.tar.gz
+>cd GROMACS-4.6.3
+#Alternative code sequence for GROMACS download#
+#git clone >git://git.GROMACS.org/GROMACS.git
+#cd GROMACS
+#git checkout --track -b release-4-6 origin/release-4-6
+#There are several different ways to compile GROMACS and some of them were tested
+#and are commented out here.  Some knowledge of compiling software is required to
+#figure out which commented out sections go together.
+>mkdir build
+>cd build
+>cmake .. -DGMX_BUILD_OWN_FFTW=ON
+>make
+>sudo make install
+>cd ./GROMACS-4.6.3/
+#Without sudo in the second of these two lines a folder is not created
+#Can use make -j N where N is the number of cores or threads to speed up make
+>sudo cmake ../GROMACS-4.6.3/
+#For compilation on multiple cores within a single node run [untested]
+http://www.GROMACS.org/Documentation/Installation_Instructions_4.5/Cmake#OpenMP_enabled_build_(default)
+>cmake -DGMX_OPENMP=ON ../GROMACS-src
+>sudo make
+#This line should by modified for multiprocessor instal-lations
+#Speeding up the make commands can be done by make -j N (N is #cores) [untested]
+>sudo make install-mdrun
+>make mdrun
+>make &> log
+>sudo make install
+>sudo make install-mdrun
+>g_energy
+#The linking of the library commands and bin which we created
+#after installation are not present in this filecd /usr/local/bin
+>cd ./Documents/
+>cd ./GROMACS-4.6.3/
+>source /home/sabri/Documents/GROMACS-4.6.3/src/kernel
+#Checking to see if editconf is here [success]
+>g_editconf
+>sudo ln -s $HOME/Documents/GROMACS-4.6.3/src/kernel /bin
+>sudo PATH=$HOME/Documents/GROMACS-4.6.3/src/kernel:$PATH
+>PATH=$HOME/Documents/GROMACS-4.6.3/src/kernel:$PATH
+#Checked for grompp [success]
+>grompp
+#Checking for mdrun [success]
+>mdrun
+
+>tar -xvf GROMACS-5.0-beta2-tar.gz
+>cd ./GROMACS-5.0-beta2
+>module load cuda
+>module load cmake/2.8.10.2
+>module load fftw3
+>module load intel/14.0.0.080
+>cmake .. -DGMX_BUILD_OWN_FFTW=ON -DGMX_DEFAULT_SUFFIX=OFF -DGMX_BINARY_SUFFIX=_5.0 -DGMX_LIBS_SUFFIX=_5.0
+>make install DESTDIR=/nfs/05/cwr0408/GROMACS-5.0/
+
+>rpm -qa > installed-software.log
+>yum -y install $(cat /home/user/installed-software.log)
+
+>echo "Look at all of this Good data..." | mail -s "Good data" notyouradviser@R1.edu –a uuencode attachment-file | mail -s "Mail subject" "notyouradviser@R1.edu" < body.txt
+

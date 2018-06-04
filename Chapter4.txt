@@ -1,0 +1,86 @@
+>for i in *
+>do
+>tar -cz -f $i\.tar.gz $i
+>done
+
+>for i in *.tar.gz
+>do
+>touch *.*
+>done
+
+>for i in *.*
+>do
+>mv ./*.* ./new/path/to/file/
+>done
+
+>for i in *
+>do
+>mv ./* ./new/path/to/folder/
+>done
+
+>cp -r ./path/to/source path/to/destination
+
+>for i in EtOHMix00 EtOHMix20 EtOHMix30 EtOHMix40 EtOHMix50 EtOHMix60 EtOHMix70 EtOHMix80 EtOHMix90 EtOHMix100 12.20.2013
+>do
+>for j in top itp dat mdp tpr pbs sh gro
+>do
+>find /fs/lustre/cwr0408/$i -name "*.$j" -size -1024k | xargs tar cfvz $i$j.tar
+>done
+>done
+
+>for i in EtOHMix00 EtOHMix20 EtOHMix30 EtOHMix40 EtOHMix50 EtOHMix60 EtOHMix70 EtOHMix80 EtOHMix90 EtOHMix100 12.20.2013
+>do
+>find /fs/lustre/cwr0408/$i -name "*.top" -o -name "*.itp" -o -name "*.dat" -o -name "*.mdp" -o -name "*.tpr" -o -name "*.pbs" -o -name "*.sh" -o -name "*.gro" -size -1024k | xargs tar cfvz $iALL.tar
+>done
+
+>find . -size -100Mb -exec cp -p --parents -t/Users/cwr0408/Desktop/copia/ {} +
+
+>cd /
+>scp -r cwr0408@oakley.osc.edu:/fs/lustre/cwr0408 /scratch/gfm12
+
+rsync -auv -e ssh --progress /source/dir/ us-er@dest.com:/dest
+
+#PBS -N CreatingTARBackups
+#PBS -j oe
+#PBS -m e
+#PBS -M youremail@R1UNI.edu
+#PBS -l walltime=7:00:00
+#PBS -l nodes=1:ppn=12
+#PBS -S /bin/bash
+>set -vx
+#The purpose of this script it to create tar files for each of the main alcohol
+#content folders in the scratch space.  One of these cop-ies then goes to my personal
+#laptop as a backup and another onto the lab desktop.
+>cd /fs/lustre/cwr0408/
+>tar -cvf EtOHMix100_2.24.2014.tar.gz ./EtOHMix100
+>tar -cvf EtOHMix80_2.24.2014.tar.gz ./EtOHMix80
+>tar -cvf EtOHMix70_2.24.2014.tar.gz ./EtOHMix70
+>tar -cvf EtOHMix50_2.24.2014.tar.gz ./EtOHMix50
+>tar -cvf EtOHMix00_2.24.2014.tar.gz ./EtOHMix00
+
+#PBS -N CreatingTARBackups
+#PBS -j oe
+#PBS -m e
+#PBS -M youremail@R1UNI.edu
+#PBS -l walltime=7:00:00
+#PBS -l nodes=1:ppn=12
+#PBS -S /bin/bash
+>set -vx
+#The purpose of this script it to create tar files for each of the main alcohol
+#content folders in the scratch space.  One of these cop-ies then goes to my personal
+#laptop as a backup and another onto the lab desktop.
+>cd /fs/lustre/cwr0408/
+>now="$(date +'%d_%m_%Y')"
+>printf "%s\n" "$now"
+>for dir in *
+>do
+>tar -cvf $dir\_$now\.tar.gz ./$dir
+>done
+>for i in EtOHMix00 EtOHMix20 EtOHMix30 EtOHMix40 EtOHMix50 EtOHMix60 EtOHMix70 EtOHMix80 EtOHMix90 EtOHMix100 12.20.2013
+>do
+>for j in top itp dat mdp tpr pbs sh gro
+>do
+>find /fs/lustre/cwr0408/$i -name "*.$j" -size -1024k | xargs tar cfvz $i$j.tar
+>done
+>done
+

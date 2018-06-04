@@ -1,0 +1,413 @@
+>showstart [job id]
+
+#!/bin/bash
+#PBS -N PE_5C_70MS_1ns
+#PBS -j oe
+#PBS -l walltime=4:00:00
+#PBS -l nodes=2:ppn=2
+#PBS -S /bin/bash
+#/bin/bash
+>module load GROMACS
+>module load cuda
+>cd $PBS_O_WORKDIR
+#need to create personal folder in /scratch/users/.
+>pbsdcp -s md1.mdp EtOHMix70_PE5_EM.gro PE_5C.top PE5.itp ethanol.top /scratch/users/gfm12
+>cd /scratch/users/gfm12
+>NPROCS=`wc -l < $PBS_NODEFILE`
+>grompp_mpi -f md1.mdp -c EtOHMix70_PE5_EM.gro -p PE_5C.top -o md1.tpr -maxwarn 7000
+>mpiexec -np $NPROCS mdrun_mpi -v -s md1.tpr -o firstmd.trr -c EtOHMix70_PE5_MD1.pdb -g firstmd.log -e firstmd.edr -cpi state.cpt -cpt 30 -maxh 4
+>cd $PBS_O_WORKDIR
+
+#PBS -N PE_12C_test.cuda.oakley
+#PBS -j oe
+#PBS -m abe
+#PBS -l nodes=1:ppn=12:gpus=2
+#PBS -S /bin/bash
+>set -vx
+>module load GROMACS/4.6.3
+>module swap intel gnu/4.4.5
+>module load cuda/5.0.35
+>module list
+# PBS_O_WORKDIR refers to the directory from which the job was submitted.
+>cd $PBS_O_WORKDIR
+>pbsdcp -p mdVer.tpr $TMPDIR
+# Use TMPDIR for best performance.
+>cd $TMPDIR
+>mdrun_gnu_gpu -v -s mdVer.tpr -o mdGPUshort.trr -c mdGPUshort.gro -g mdGPUshort.log -e mdGPUshort.edr -maxh .2
+>cat mdGPUshort.log
+>cp -p * $PBS_O_WORKDIR/
+>ls -al
+
+#PBS -N PE14_Mix50EM
+#PBS -j oe
+#PBS -l walltime=01:00:00
+#PBS -l nodes=2:ppn=12
+#PBS -S /bin/bash
+>set -vx
+# loading the modules
+>module load fftw3
+>module load GROMACS/4.6.3
+# copying all files to nodes
+>cd $PBS_O_WORKDIR
+>pbsdcp em.mdp EtOHMix50_PE14.gro PE_14C.top ethanol.top PE14.itp $TMPDIR
+>cd $TMPDIR
+# running the molecular dynamics
+>grompp -f em.mdp -c EtOHMix50_PE14.gro -p PE_14C.top -o em.tpr -maxwarn 7000
+>mpiexec mdrun_mpi -rdd 2.0 -s em.tpr -o EM.trr -c EtOHMix50_PE14_EM.gro -e EM.edr -g EM.log
+# copying files back
+>pbsdcp -g em.tpr EM.trr EtOHMix50_PE14_EM.gro EM.edr EM.log >$PBS_O_WORKDIR
+>ls -al
+
+>cd /fs/lustre/cwr0408/9.5.2013/PE18
+>PE18EM=$(qsub -N PE18em em.pbs)
+>echo $PE18EM
+>PE18MD1=$(qsub -W depend=afterok:$PE18EM -N PE18Cmd1 firstmd.pbs)
+>echo $PE18MD1
+>PE18MD2=$(qsub -W depend=afterok:$PE18MD1 -N PE18Cmd2 secondmd.pbs)
+>echo $PE18MD2
+>PE18MD3=$(qsub -W depend=afterok:$PE18MD2 -N PE18Cmd3 thirdmd.pbs)
+>echo $PE18MD3
+
+title = FWS
+cpp = /usr/bin/cpp
+define = -DFLEXIBLE
+constraints = none
+integrator = steep
+dt = 0.001 ; ps !
+nsteps = 400
+nstlist = 10
+ns_type = grid
+rlist = 1.0
+coulombtype = PME
+rcoulomb = 1.0
+rvdw = 1.0
+fourierspacing = 0.40
+fourier_nx = 0
+fourier_ny = 0
+fourier_nz = 0
+pme_order = 4
+ewald_rtol = 1e-5
+optimize_fft = yes
+;
+; Energy minimizing stuff
+;
+emtol = 1000.0
+emstep = 0.01
+
+A full md MDP file should contain the following elements starting on the first line:
+integrator          =  md 
+dt                  =  0.001 ; ps ! 
+nsteps              =  8000000 ;  
+nstcomm             =  1 
+nstxout             = 500 
+nstvout             =  500 
+nstfout             =  0 
+nstlog              =  10 
+nstenergy           =  10 
+nstlist             =  10 
+ns_type             =  grid 
+rlist               =  1.1 
+coulombtype    =  PME 
+rcoulomb            =  1.1 
+vdwtype             =  cut-off 
+rvdw                =  1.1 
+fourierspacing  =  0.4 
+fourier_nx  =  0 
+fourier_ny  =  0 
+fourier_nz  =  0 
+pme_order  =  4 
+ewald_rtol  =  1e-5 
+optimize_fft  =  yes 
+; temperature coupling is on 
+Tcoupl              =  v-rescale 
+; Groups to couple separately
+tc-grps                  = System
+; Time constant (ps) and reference temperature (K)
+tau_t                    = 0.1
+ref_t                    = 300
+; Generate velocites is on at 300 K. 
+gen_vel             =  yes 
+gen_temp            =  300.0 
+gen_seed            =  173529
+constraints              = all-bonds
+;constraints              = none
+
+;       Energy minimizing stuff 
+; 
+emtol               =  1.0 
+emstep              =  0.01 
+
+; VARIOUS PREPROCESSING OPTIONS
+title                    = AdvancedMDP
+cpp                      = /usr/bin/cpp
+include                  =
+define                   =
+; RUN CONTROL PARAMETERS
+integrator               = md
+; Start time and timestep in ps
+tinit                    = 0.0
+dt                       = 0.003
+;nsteps                  = 10000000
+nsteps                   = 10000000
+; For exact run continuation or redoing part of a run
+init_step                = 0
+; mode for center of mass motion removal
+comm-mode                = Linear
+; number of steps for center of mass motion removal
+nstcomm                  = 100
+; group(s) for center of mass motion removal
+comm-grps                
+; LANGEVIN DYNAMICS OPTIONS
+; Temperature, friction coefficient (amu/ps) and random seed
+;bd-temp                  = 300
+;bd-fric                  = 0
+;ld-seed                  = 1993
+; ENERGY MINIMIZATION OPTIONS
+; Force tolerance and initial step-size
+emtol                    = 10
+emstep                   = 0.01
+; Max number of iterations in relax_shells
+niter                    = 20
+; Step size (1/ps^2) for minimization of flexible con-straints
+fcstep                   = 0
+; Frequency of steepest descents steps when doing CG
+nstcgsteep               = 1000 
+nbfgscorr                = 10
+; OUTPUT CONTROL OPTIONS
+; Output frequency for coords (x), velocities (v) and forces (f)
+nstxout                  = 50000
+nstvout                  = 100000
+nstfout                  = 0
+; Checkpointing helps you continue after crashes
+nstcheckpoint            = 1000000
+; Output frequency for energies to log file and energy file
+nstlog                   = 100000
+nstenergy                = 10000
+; Output frequency and precision for xtc file
+nstxtcout                = 0
+xtc_precision            = 1000
+; This selects the subset of atoms for the xtc file. You can
+; select multiple groups. By default all atoms will be written.
+xtc-grps                 =
+; Selection of energy groups
+energygrps               = A B
+
+; NEIGHBORSEARCHING PARAMETERS
+; nblist update frequency
+nstlist                  = 10
+; ns algorithm (simple or grid)
+ns_type                  = grid
+; Periodic boundary conditions: xyz (default), no (vacu-um)
+; or full (infinite systems only)
+pbc                      = xyz
+; nblist cut-off
+rlist                    = 1.1
+;domain-decomposition     = no
+
+; OPTIONS FOR ELECTROSTATICS AND VDW
+; Method for doing electrostatics
+coulomb_type             = User
+;rcoulomb_switch          = 0
+;rcoulomb                 = 0
+; Dielectric constant (DC) for cut-off or DC of reaction field
+epsilon_r                = 1.0
+; Method for doing Van der Waals
+vdw_type                 = User
+; cut-off lengths
+rvdw_switch              = 0
+rvdw                     = 1.0
+; Apply long range dispersion corrections for Energy and Pressure
+DispCorr                 = No
+;DispCorr                 = EnerPres
+; Extension of the potential lookup tables beyond the cut-off
+table-extension          = 1
+energygrp_table = A B
+
+; Spacing for the PME/PPPM FFT grid
+fourierspacing           = 0.12
+; FFT grid size, when a value is 0 fourierspacing will be used
+fourier_nx               = 0
+fourier_ny               = 0
+fourier_nz               = 0
+; EWALD/PME/PPPM parameters
+pme_order                = 4
+ewald_rtol               = 1e-05
+ewald_geometry           = 3d
+epsilon_surface          = 0
+optimize_fft             = no
+; GENERALIZED BORN ELECTROSTATICS
+; Algorithm for calculating Born radii
+gb_algorithm             = Still
+; Frequency of calculating the Born radii inside rlist
+nstgbradii               = 1
+; Cutoff for Born radii calculation; the contribution from atoms
+; between rlist and rgbradii is updated every nstlist steps
+rgbradii                 = 2
+; Salt concentration in M for Generalized Born models
+gb_saltconc              = 0
+
+; IMPLICIT SOLVENT (for use with Generalized Born elec-trostatics)
+implicit_solvent         = No
+
+; OPTIONS FOR WEAK COUPLING ALGORITHMS
+; Temperature coupling
+;tcoupl                   = no
+;tcoupl                   = Berendsen
+tcoupl                   = v-rescale
+; Groups to couple separately
+tc-grps                  = system
+; Time constant (ps) and reference temperature (K)
+tau_t                    = 0.5
+ref_t                    = 503
+; Pressure coupling
+Pcoupl                   = Berendsen 
+;Pcoupl                   = Berendsen
+Pcoupltype               = Isotropic
+; Time constant (ps), compressibility (1/bar) and refer-ence P (bar)
+tau_p                    = 5.0
+compressibility          = 2.755e-5
+ref_p                    = 1.01325
+; Random seed for Andersen thermostat
+andersen_seed            = 815131
+; SIMULATED ANNEALING
+; Type of annealing for each temperature group (no/single/periodic)
+annealing                =
+; Number of time points to use for specifying annealing in each group
+annealing_npoints        =
+; List of times at the annealing points for each group
+annealing_time           =
+; Temp. at each annealing point, for each group.
+annealing_temp           =
+; GENERATE VELOCITIES FOR STARTUP RUN
+gen_vel                  = yes
+gen_temp                 = 503
+gen_seed                 = -1
+; OPTIONS FOR BONDS
+constraints              = none
+;constraints              = all-bonds
+; Type of constraint algorithm
+constraint-algorithm     = Lincs
+;constraint-algorithm     = Shake
+; Do not constrain the start configuration
+unconstrained-start      = yes
+; Use successive overrelaxation to reduce the number of shake iterations
+Shake-SOR                = no
+; Relative tolerance of shake
+shake-tol                = 1e-04
+; Highest order in the expansion of the constraint cou-pling matrix
+lincs-order              = 4
+; Number of iterations in the final step of LINCS. 1 is fine for
+; normal simulations, but use 2 to conserve energy in NVE runs.
+; For energy minimization with constraints it should be 4 to 8.
+lincs-iter               = 1 
+; Lincs will write a warning to the stderr if in one step a bond
+; rotates over more degrees than
+lincs-warnangle          = 30
+; Convert harmonic bonds to morse potentials
+morse                    = no
+; ENERGY GROUP EXCLUSIONS
+; Pairs of energy groups for which all non-bonded inter-actions are excluded
+energygrp_excl           =
+; NMR refinement stuff
+; Distance restraints type: No, Simple or Ensemble
+disre                    = No
+; Force weighting of pairs in one distance restraint: Conservative or Equal
+disre-weighting          = Conservative
+; Use sqrt of the time averaged times the instantaneous violation
+disre-mixed              = no
+disre-fc                 = 1000
+disre-tau                = 0
+; Output frequency for pair distances to energy file
+nstdisreout              = 100
+; Orientation restraints: No or Yes
+orire                    = no
+; Orientation restraints force constant and tau for time averaging
+orire-fc                 = 0
+orire-tau                = 0
+orire-fitgrp             =
+; Output frequency for trace(SD) to energy file
+nstorireout              = 100
+; Dihedral angle restraints: No, Simple or Ensemble
+dihre                    = No
+dihre-fc                 = 1000
+dihre-tau                = 0
+; Output frequency for dihedral values to energy file
+nstdihreout              = 100
+; Free energy control stuff
+free-energy              = no
+init-lambda              = 0
+delta-lambda             = 0
+sc-alpha                 = 0
+sc-sigma                 = 0.3
+; Non-equilibrium MD stuff
+acc-grps                 =
+accelerate               =
+freezegrps               =
+freezedim                =
+cos-acceleration         = 0
+; Electric fields
+; Format is number of terms (int) and for all terms an amplitude (real)
+; and a phase angle (real)
+E-x                      =
+E-xt                     =
+E-y                      =
+E-yt                     =
+E-z                      =
+E-zt                     =
+; User defined thingies
+user1-grps               =
+user2-grps               =
+userint1                 = 0
+userint2                 = 0
+userint3                 = 0
+userint4                 = 0
+userreal1                = 0
+userreal2                = 0
+userreal3                = 0
+userreal4                = 0
+
+constraints = all-bonds
+integrator = md
+dt = 0.001 
+nsteps = 16000000
+nstcomm = 1000
+nstxout = 1000 
+nstvout = 1000
+nstfout = 0
+nstlist = 100
+ns_type = grid
+pbc = xyz
+;nwall = 2
+rlist = 1.2
+coulombtype = PME
+rcoulomb = 1.2
+vdwtype = cut-off
+rvdw = 1.2
+fourierspacing = 0.22
+fourier_nx = 0
+fourier_ny = 0
+fourier_nz = 0
+pme_order = 4
+ewald_rtol = 1e-5
+optimize_fft = yes
+; Berendsen temperature coupling is on
+Tcoupl = yes
+tau_t = .1	.1
+tc-grps = PE6    SOL
+ref_t = 293.15  293.15
+; Pressure coupling is off
+Pcoupl = no
+;Pcoupltype = isotropic
+;tau_p = 0.5
+;compressibility = 4.5e-5
+;ref_p = 1.0
+; Generate velocites is on at 300 K.
+gen_vel = yes
+gen_temp = 298.15
+gen_seed = 173529
+
+slab geomery = ewald sums
+ewald_geometry = 3dc
+
+PBC=xyz
+
