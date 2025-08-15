@@ -14,3 +14,7 @@ If you use this repository in academic work, please cite:
 - Paper: Mongelli, G.F. "The surface activity of polymers in cosolvated systems determined from computational simulation." Polymer, 2025. DOI: https://doi.org/10.1016/j.polymer.2015.11.003.
 
 See `CITATION.cff` for machine-readable metadata (GitHub’s “Cite this repository” button).
+
+**Licensing.** Code (Python/Mathematica) is licensed under **Apache-2.0**.  
+Documentation, prose, and figures are licensed under **CC BY 4.0**.  
+In notebooks, code cells are Apache-2.0; narrative text/figures are CC BY 4.0.
