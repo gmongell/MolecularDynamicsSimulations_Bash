@@ -1,0 +1,20 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "The surface activity of polymers in cosolvated systems determined from computational simulation"
+version: "v1.0.0"
+date-released: "2015-09-04"
+doi: "<DOI from Zenodo once minted>"
+repository-code: "https://github.com/gmongell/MolecularDynamicsSimulations_Bash"
+authors:
+  - family-names: "Mongelli"
+    given-names: "Guy Francis"
+    orcid: "https://orcid.org/0000-0002-2160-2778"
+preferred-citation:
+  type: article
+  title: "The surface activity of polymers in cosolvated systems determined from computational simulation"
+  authors:
+    - family-names: "Mongelli"
+      given-names: "Guy Francis"
+  year: 2025
+  doi: "https://doi.org/10.1016/j.polymer.2015.11.003"
+  journal: "Polymer"
